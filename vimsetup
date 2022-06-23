@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# colors
+blue='\033[0;34m'
+red='\033[0;31m'
+green='\033[0;32m'
+nocolor='\033[0m'
+
+# plugin list to install
+plugins=(
+	[0]=https://github.com/jiangmiao/auto-pairs.git
+	[1]=https://github.com/mattn/emmet-vim.git
+	[2]=https://github.com/tpope/vim-surround.git
+	[3]=https://github.com/sheerun/vim-polyglot.git
+	[4]=https://github.com/tomtom/tcomment_vim.git
+	[5]=https://github.com/pseewald/vim-anyfold.git
+	[6]= https://github.com/preservim/nerdtree.git
+)
+
+# theme to install
+theme=https://github.com/joshdick/onedark.vim.git
+
+# check requirements for run this script
+function check {
+	# check for vim is installed
+	command -v vim > /dev/null
+	if [ $? -gt 0 ]; then
+		echo -e >&2 "${red}you must install vim"
+		return 1
+	fi
+
+	# check for git is installed
+	command -v git > /dev/null
+	if [ $? -gt 0 ]; then
+		echo -e >&2 "${red}you must install git"
+		return 1
+	fi
+
+	# check vim version
+	vim --version | head --lines 1 | grep --quiet 8.[1-9]
+	if [ $? -gt 0 ]; then
+		echo -e >&2 "${red}you need at least vim 8.1 or above"
+		return 1
+	fi
+}
+
+# clone plugin or theme
+function clone {
+	pluginOrTheme=$1
+	repository=$2
+	name=$(basename $repository .git)
+
+	echo -e "${nocolor}installing $pluginOrTheme: ${blue}$name"
+
+	git clone $repository 2> /dev/null
+
+	case $? in
+		0)
+			echo -e "${green}$pluginOrTheme $name installed successfully"
+			;;
+		128)
+			echo -e >&2 "${red}$pluginOrTheme $name has been installed previously"
+			return 1
+			;;
+		*)
+			echo -e >&2 "${red}error while installing $pluginOrTheme $name"
+			return 1
+			;;
+	esac
+}
+
+function main {
+	check
+	if [ $? -gt 0 ]; then
+		exit $?
+	fi
+
+	# create plugins directory if not exists
+	mkdir -p ~/.vim/pack/plugins/start 2> /dev/null
+
+	cd ~/.vim/pack/plugins/start
+
+	# installing plugins
+	for plugin in ${plugins[@]}; do
+		clone plugin $plugin
+	done
+
+	# create theme directory if not exists
+	mkdir -p ~/.vim/pack/themes/opt 2> /dev/null
+
+	cd ~/.vim/pack/themes/opt
+
+	# installing theme
+	clone theme $theme
+}
+
+main
+
