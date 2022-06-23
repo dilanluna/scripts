@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# colores
+azul='\033[0;34m'
+rojo='\033[0;31m'
+verde='\033[0;32m'
+sincolor='\033[0m'
+
+# lista de plugins a instalar
+plugins=(
+	[0]=https://github.com/jiangmiao/auto-pairs.git
+	[1]=https://github.com/mattn/emmet-vim.git
+	[2]=https://github.com/tpope/vim-surround.git
+	[3]=https://github.com/sheerun/vim-polyglot.git
+	[4]=https://github.com/tomtom/tcomment_vim.git
+	[5]=https://github.com/pseewald/vim-anyfold.git
+	[6]= https://github.com/preservim/nerdtree.git
+)
+
+# tema a install
+tema=https://github.com/joshdick/onedark.vim.git
+
+# chequea que se cumplan los requisitos para ejecutar este script
+function check {
+	# verificamos que vim este instalado
+	command -v vim > /dev/null
+	if [ $? -gt 0 ]; then
+		echo -e >&2 "${rojo}no tienes vim instalado en tu equipo"
+		return 1
+	fi
+
+	# verficamos que git este instalado
+	command -v git > /dev/null
+	if [ $? -gt 0 ]; then
+		echo -e >&2 "${rojo}necesitas instalar git para ejecutar este script"
+		return 1
+	fi
+
+	# verificamos la version de vim
+	vim --version | head --lines 1 | grep --quiet 8.[1-9]
+	if [ $? -gt 0 ]; then
+		echo -e >&2 "${rojo}necesitas vim 8.1 o superior para usuar el sistemas de paquetes de vim"
+		return 1
+	fi
+}
+
+# clona un plugin o un tema desde un repositorio remoto de git
+function clone {
+	pluginOTema=$1
+	repositorio=$2
+	nombre=$(basename $repositorio .git)
+
+	echo -e "${sincolor}instalando $pluginOTema: ${azul}$nombre"
+
+	git clone $repositorio 2> /dev/null
+	
+	case $? in
+		0)
+			echo -e "${verde}$pluginOTema $nombre instalado correctamente"
+			;;
+		128)
+			echo -e >&2 "${rojo}$pluginOTema $nombre ya ha sido instalado previamente"
+			return 1
+			;;
+		*)
+			echo -e >&2 "${rojo}error instalado el $pluginOTema $nombre"
+			return 1
+			;;
+	esac
+}
+
+function main {
+	check
+	if [ $? -gt 0 ]; then
+		exit $?
+	fi
+
+	# creamos el directorio de plugins de vim si no existe
+	mkdir -p ~/.vim/pack/plugins/start 2> /dev/null
+
+	cd ~/.vim/pack/plugins/start
+
+	# instalamos los plugins clonando los repositorios
+	for plugin in ${plugins[@]}; do
+		clone plugin $plugin
+	done
+
+	# creamos el directorio para los temas si no existe
+	mkdir -p ~/.vim/pack/themes/opt 2> /dev/null
+
+	cd ~/.vim/pack/themes/opt
+
+	# instalamos el tema
+	clone tema $tema
+}
+
+main
+
