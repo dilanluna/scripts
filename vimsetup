@@ -37,7 +37,7 @@ function check {
 	fi
 
 	# check vim version
-	vim --version | head --lines 1 | grep --quiet 8.[1-9]
+	vim --version | head --lines 1 | grep --quiet [8-9].[1-9]
 	if [ $? -gt 0 ]; then
 		echo -e >&2 "${red}you need at least vim 8.1 or above"
 		return 1
